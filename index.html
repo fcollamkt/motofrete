@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#0D0F14"/>
+  <title>MotoFrete</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0D0F14;--surface:#161922;--border:#252A36;--accent:#00E5A0;--warn:#FFB800;--danger:#FF6B35;--text:#E8EAF0;--muted:#6B7280;--r:14px}
+    body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh}
+
+    /* AUTH */
+    #authScreen{position:fixed;inset:0;background:var(--bg);z-index:1000;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center}
+    #authScreen.hide{display:none}
+    .auth-inner{width:100%;max-width:400px;padding:48px 24px 80px}
+    .auth-logo{text-align:center;margin-bottom:36px}
+    .auth-logo-icon{width:68px;height:68px;background:var(--accent);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:14px}
+    .auth-logo-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.4rem;color:var(--text)}
+    .auth-logo-title span{color:var(--accent)}
+    .auth-logo-sub{font-size:0.72rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-top:4px}
+    .auth-tabs{display:flex;background:var(--surface);border-radius:12px;padding:4px;margin-bottom:28px}
+    .auth-tab{flex:1;padding:11px;border:none;border-radius:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
+    .auth-tab.active{background:var(--accent);color:#0D0F14}
+    .auth-tab:not(.active){background:transparent;color:var(--muted)}
+    .auth-form{display:none}
+    .auth-form.active{display:block}
+    .field-group{margin-bottom:16px}
+    .field-label{display:block;font-size:0.8rem;color:#A0A8B8;font-weight:600;margin-bottom:7px}
+    .field-input{width:100%;background:#0D0F14;border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.95rem;padding:12px 14px;outline:none;transition:border-color 0.2s}
+    .field-input:focus{border-color:var(--accent)}
+    .pass-wrap{position:relative}
+    .pass-wrap .field-input{padding-right:44px}
+    .pass-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px}
+    .auth-erro{font-size:0.8rem;min-height:22px;margin-bottom:10px;font-weight:500}
+    .auth-erro.erro{color:var(--danger)}
+    .auth-erro.ok{color:var(--accent)}
+    .btn-auth{width:100%;padding:14px;background:var(--accent);color:#0D0F14;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all 0.15s}
+    .btn-auth:disabled{opacity:0.6;cursor:not-allowed}
+    .btn-auth:not(:disabled):active{transform:scale(0.97)}
+
+    /* APP */
+    #appScreen{display:none}
+    #appScreen.show{display:block}
+
+    /* NAV */
+    .nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200}
+    .nav-tab{flex:1;padding:13px 4px;border:none;background:transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
+    .nav-tab span{display:block;font-size:1.2rem;margin-bottom:1px}
+    .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+    /* PAGES */
+    .page{display:none;max-width:520px;margin:0 auto;padding:16px 16px 100px}
+    .page.active{display:block}
+
+    /* TOTAL STICKY */
+    .total-sticky{position:sticky;top:52px;z-index:100;background:var(--bg);padding:10px 0 12px;margin-bottom:4px}
+    .total-box{background:linear-gradient(135deg,#00E5A010,#00E5A022);border:1px solid #00E5A040;border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .total-left{flex:1;min-width:0}
+    .total-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1px}
+    .total-valor{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.4rem;color:var(--accent);line-height:1}
+    .total-faixa{font-size:0.68rem;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .total-cliente-label{font-size:0.72rem;color:var(--accent);margin-top:2px;font-weight:600}
+    .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;margin-left:6px;vertical-align:middle}
+    .sync-dot.ok{background:var(--accent)}
+    .sync-dot.err{background:var(--danger)}
+    .sync-dot.syncing{background:var(--warn);animation:blink 0.8s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+    .btn-reg{background:var(--accent);color:#0D0F14;border:none;border-radius:10px;padding:11px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.95rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:transform 0.15s}
+    .btn-reg:active{transform:scale(0.94)}
+    .btn-reg.pop{animation:pop 0.4s ease}
+    @keyframes pop{0%{transform:scale(1)}35%{transform:scale(0.93)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+    /* CARDS */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+    .card-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .card-title::before{content:'';display:inline-block;width:3px;height:12px;background:var(--accent);border-radius:2px}
+
+    /* KM */
+    .km-wrap{display:flex;align-items:center;background:#0D0F14;border:2px solid var(--accent);border-radius:12px;overflow:hidden;margin-bottom:8px}
+    .km-wrap input{flex:1;background:transparent;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.6rem;color:var(--accent);padding:10px 6px 10px 16px;width:0;min-width:0;-moz-appearance:textfield}
+    .km-wrap input::-webkit-outer-spin-button,.km-wrap input::-webkit-inner-spin-button{-webkit-appearance:none}
+    .km-unit{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.3rem;color:var(--muted);padding:0 16px 0 4px}
+    .km-badge{display:inline-block;margin-bottom:10px;padding:4px 11px;background:#00E5A015;border:1px solid #00E5A035;border-radius:6px;font-size:0.76rem;color:var(--accent);font-weight:600}
+    .km-btns{display:flex;gap:6px}
+    .km-btn{flex:1;padding:8px 2px;background:#1E2330;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .km-btn:active{background:#252A36;color:var(--text)}
+
+    /* SLIDER */
+    .sl-group{margin-bottom:16px}
+    .sl-group:last-child{margin-bottom:0}
+    .sl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+    .sl-label{font-size:0.86rem;color:#A0A8B8;font-weight:500}
+    .sl-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem}
+    input[type=range]{width:100%;appearance:none;height:5px;background:var(--border);border-radius:3px;outline:none;cursor:pointer}
+    input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;border-radius:50%;background:var(--tc,var(--accent));border:2.5px solid var(--bg)}
+    .sl-range{display:flex;justify-content:space-between;font-size:0.67rem;color:var(--muted);margin-top:4px}
+
+    /* RADIO */
+    .radio-opts{display:flex;flex-wrap:wrap;gap:7px}
+    .r-btn{display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+    .r-btn.on{background:color-mix(in srgb,var(--accent) 13%,transparent);border-color:var(--accent);color:var(--accent)}
+    .r-btn.on.w{background:color-mix(in srgb,var(--warn) 13%,transparent);border-color:var(--warn);color:var(--warn)}
+    .r-btn.on.d{background:color-mix(in srgb,var(--danger) 13%,transparent);border-color:var(--danger);color:var(--danger)}
+
+    /* TOGGLE */
+    .tog-row{display:flex;align-items:center;justify-content:space-between;padding-top:12px;margin-top:12px;border-top:1px solid var(--border)}
+    .tog-label{font-size:0.86rem;color:#A0A8B8}
+    .tog{position:relative;width:46px;height:26px;cursor:pointer;flex-shrink:0}
+    .tog input{opacity:0;width:0;height:0}
+    .tog-track{position:absolute;inset:0;background:var(--border);border-radius:13px;transition:0.2s}
+    .tog-thumb{position:absolute;width:20px;height:20px;left:3px;top:3px;background:white;border-radius:50%;transition:0.2s}
+    .tog input:checked~.tog-track{background:var(--accent)}
+    .tog input:checked~.tog-thumb{transform:translateX(20px)}
+
+    /* BREAKDOWN */
+    .bd-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:0.82rem;border-bottom:1px solid #1E2330}
+    .bd-row:last-child{border-bottom:none}
+    .bd-key{color:var(--muted);flex:1;padding-right:8px}
+    .bd-val{font-weight:600;color:var(--text);white-space:nowrap}
+    .bd-mult{font-weight:700;color:var(--warn);white-space:nowrap}
+
+    /* TABELA */
+    .t-table{width:100%;border-collapse:collapse}
+    .t-table td{padding:7px 4px;font-size:0.81rem;border-bottom:1px solid var(--border)}
+    .t-table tr:last-child td{border-bottom:none}
+    .t-table td:first-child{color:var(--muted)}
+    .t-table td:last-child{text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--accent)}
+    .t-table tr.t-on td{background:#00E5A009}
+    .t-table tr.t-on td:first-child{color:var(--text);font-weight:600}
+    .t-table tr.t-on td:last-child{color:var(--warn)}
+    .t-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--warn);margin-right:6px;vertical-align:middle}
+
+    /* CLIENTES */
+    .cl-selector{background:#0D0F14;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .cl-selector:active{border-color:var(--accent)}
+    .cl-sel-left{display:flex;align-items:center;gap:10px}
+    .cl-sel-text{font-size:0.88rem;color:var(--muted)}
+    .cl-sel-text.has{color:var(--text);font-weight:600}
+    .cl-sel-sub{font-size:0.72rem;color:var(--muted)}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn-primary{width:100%;padding:13px;background:var(--accent);color:#0D0F14;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;margin-top:4px;-webkit-tap-highlight-color:transparent}
+    .btn-primary:active{transform:scale(0.97)}
+    .btn-sec{flex:1;padding:9px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .btn-del{flex:1;padding:9px;background:#FF6B3515;border:1px solid #FF6B3535;border-radius:8px;color:#FF6B35;font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer}
+    .search-wrap{position:relative;margin-bottom:14px}
+    .search-wrap input{width:100%;background:#0D0F14;border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.92rem;padding:10px 14px 10px 36px;outline:none}
+    .search-wrap input:focus{border-color:var(--accent)}
+    .search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:0.95rem}
+    .cl-card{background:#0D0F14;border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:9px}
+    .cl-card.sel{border-color:var(--accent);background:#00E5A008}
+    .cl-top{display:flex;align-items:center;gap:10px}
+    .cl-av{width:38px;height:38px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:#0D0F14;flex-shrink:0}
+    .cl-info{flex:1;min-width:0}
+    .cl-nome{font-size:0.92rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cl-tel{font-size:0.75rem;color:var(--muted);margin-top:1px}
+    .cl-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+    .cb{font-size:0.68rem;padding:2px 8px;border-radius:4px;font-weight:600}
+    .cb-e{background:#1E2330;color:var(--muted)}
+    .cb-c{background:#00E5A015;color:var(--accent)}
+    .cb-g{background:#FFB80015;color:var(--warn)}
+    .cl-actions{display:flex;gap:8px;margin-top:10px}
+
+    /* HISTORICO */
+    .sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .sec-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+    .sec-title::before{content:'';display:inline-block;width:3px;height:12px;border-radius:2px;background:var(--accent)}
+    .sec-title.w::before{background:var(--warn)}
+    .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;font-size:0.68rem;font-weight:700;background:#FF6B3525;color:#FF6B35}
+    .btn-clear{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'Barlow',sans-serif;font-size:0.72rem;padding:4px 10px;cursor:pointer}
+    .hist-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);animation:fadeIn 0.3s ease}
+    .hist-item:last-child{border-bottom:none}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1}}
+    .hist-ico{width:34px;height:34px;background:#1E2330;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .hist-info{flex:1;min-width:0}
+    .hist-desc{font-size:0.81rem;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hist-meta{font-size:0.70rem;color:var(--muted);margin-top:1px}
+    .hist-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;color:var(--accent);white-space:nowrap}
+    .hist-total{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px dashed var(--border);margin-top:2px}
+    .ht-label{font-size:0.78rem;color:var(--muted);font-weight:600}
+    .ht-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.15rem;color:var(--warn)}
+    .empty{text-align:center;color:var(--muted);font-size:0.83rem;padding:24px 0 8px}
+    .empty span{display:block;font-size:2rem;margin-bottom:8px}
+
+    /* MODAL */
+    .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:flex-end}
+    .modal-ov.open{display:flex;animation:fo 0.2s ease}
+    @keyframes fo{from{opacity:0}to{opacity:1}}
+    .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 16px 40px;width:100%;max-height:75vh;overflow-y:auto;animation:su 0.25s ease}
+    @keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;margin-bottom:14px}
+    .modal-search{width:100%;background:#0D0F14;border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.92rem;padding:10px 14px;outline:none;margin-bottom:12px}
+    .modal-search:focus{border-color:var(--accent)}
+    .modal-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .modal-item:active,.modal-item.sel{background:#00E5A010}
+    .modal-item-nome{font-size:0.9rem;font-weight:600;color:var(--text)}
+    .modal-item-end{font-size:0.73rem;color:var(--muted)}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E2330;border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:0.85rem;color:var(--text);opacity:0;transition:all 0.3s;z-index:9999;white-space:nowrap;pointer-events:none}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+
+<!-- ===== TELA LOGIN ===== -->
+<div id="authScreen">
+  <div class="auth-inner">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🏍️</div>
+      <div class="auth-logo-title">Moto<span>Frete</span></div>
+      <div class="auth-logo-sub">Gestão de entregas</div>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabEntrar" onclick="authTab('login')">Entrar</button>
+      <button class="auth-tab" id="tabCadastrar" onclick="authTab('cadastro')">Cadastrar</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-form active" id="formLogin">
+      <div class="field-group">
+        <label class="field-label">E-mail</label>
+        <input class="field-input" id="lEmail" type="email" inputmode="email" placeholder="seu@email.com"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Senha</label>
+        <div class="pass-wrap">
+          <input class="field-input" id="lSenha" type="password" placeholder="Sua senha"/>
+          <button class="pass-eye" onclick="verSenha('lSenha',this)">👁️</button>
+        </div>
+      </div>
+      <div class="auth-erro" id="lErro"></div>
+      <button class="btn-auth" id="btnEntrar" onclick="fazerLogin()">Entrar</button>
+    </div>
+
+    <!-- CADASTRO -->
+    <div class="auth-form" id="formCadastro">
+      <div class="field-group">
+        <label class="field-label">Nome completo</label>
+        <input class="field-input" id="cNome" type="text" placeholder="Seu nome"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">E-mail</label>
+        <input class="field-input" id="cEmail" type="email" inputmode="email" placeholder="seu@email.com"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Senha</label>
+        <div class="pass-wrap">
+          <input class="field-input" id="cSenha" type="password" placeholder="Mínimo 6 caracteres"/>
+          <button class="pass-eye" onclick="verSenha('cSenha',this)">👁️</button>
+        </div>
+      </div>
+      <div class="auth-erro" id="cErro"></div>
+      <button class="btn-auth" id="btnCadastrar" onclick="fazerCadastro()">Criar conta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="appScreen">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <button class="nav-tab active" id="nt-frete" onclick="goPage('frete')"><span>🏍️</span>Frete</button>
+    <button class="nav-tab" id="nt-clientes" onclick="goPage('clientes')"><span>👥</span>Clientes</button>
+    <button class="nav-tab" id="nt-historico" onclick="goPage('historico')"><span>📋</span>Corridas</button>
+    <button class="nav-tab" id="nt-sair" onclick="fazerLogout()" style="max-width:58px"><span>🚪</span>Sair</button>
+  </nav>
+
+  <!-- PAGE FRETE -->
+  <div class="page active" id="page-frete">
+    <div style="height:10px"></div>
+
+    <div class="total-sticky">
+      <div class="total-box">
+        <div class="total-left">
+          <div class="total-label">Total estimado <span class="sync-dot" id="syncDot"></span></div>
+          <div class="total-valor" id="tvValor">R$12,00</div>
+          <div class="total-faixa" id="tvFaixa">5 km · Urbana · Diurno</div>
+          <div class="total-cliente-label" id="tvCliente" style="display:none"></div>
+        </div>
+        <button class="btn-reg" id="btnReg">✓ Registrar</button>
+      </div>
+    </div>
+
+    <!-- CLIENTE -->
+    <div class="card">
+      <div class="card-title">Cliente</div>
+      <div class="cl-selector" id="clSelector">
+        <div class="cl-sel-left">
+          <span style="font-size:1.2rem">👤</span>
+          <div>
+            <div class="cl-sel-text" id="clSelText">Selecionar cliente</div>
+            <div class="cl-sel-sub" id="clSelSub">Toque para escolher</div>
+          </div>
+        </div>
+        <span style="color:var(--muted);font-size:1.2rem">›</span>
+      </div>
+    </div>
+
+    <!-- DISTÂNCIA -->
+    <div class="card">
+      <div class="card-title">Distância da Entrega</div>
+      <div class="km-wrap">
+        <input type="number" id="inputKm" min="0.5" max="999" step="0.5" value="5" inputmode="decimal" placeholder="0"/>
+        <span class="km-unit">km</span>
+      </div>
+      <div class="km-badge" id="kmBadge">4–6 km → R$ 15,00 fixo</div>
+      <div class="km-btns">
+        <button class="km-btn" data-delta="-1">−1 km</button>
+        <button class="km-btn" data-delta="-0.5">−0,5</button>
+        <button class="km-btn" data-delta="0.5">+0,5</button>
+        <button class="km-btn" data-delta="1">+1 km</button>
+        <button class="km-btn" data-delta="5">+5 km</button>
+      </div>
+      <div class="tog-row">
+        <span class="tog-label">Cobrar retorno (ida e volta)</span>
+        <label class="tog"><input type="checkbox" id="chkRetorno"/><div class="tog-track"></div><div class="tog-thumb"></div></label>
+      </div>
+    </div>
+
+    <!-- TEMPO E CARGA -->
+    <div class="card">
+      <div class="card-title">Tempo e Carga</div>
+      <div class="sl-group">
+        <div class="sl-header"><span class="sl-label">Tempo de espera</span><span class="sl-val" id="slvEspera" style="color:#FFB800">0 min</span></div>
+        <input type="range" id="slEspera" min="0" max="120" step="5" value="0" style="--tc:#FFB800"/>
+        <div class="sl-range"><span>0 min</span><span>120 min</span></div>
+      </div>
+      <div class="sl-group">
+        <div class="sl-header"><span class="sl-label">Peso da carga</span><span class="sl-val" id="slvPeso" style="color:#6B9BFF">1 kg</span></div>
+        <input type="range" id="slPeso" min="0.5" max="30" step="0.5" value="1" style="--tc:#6B9BFF"/>
+        <div class="sl-range"><span>0,5 kg</span><span>30 kg</span></div>
+      </div>
+      <div class="sl-group">
+        <div class="sl-header"><span class="sl-label">Pedágio / Taxas extras</span><span class="sl-val" id="slvPedagio" style="color:#FF6B35">R$ 0</span></div>
+        <input type="range" id="slPedagio" min="0" max="50" step="0.5" value="0" style="--tc:#FF6B35"/>
+        <div class="sl-range"><span>R$ 0</span><span>R$ 50</span></div>
+      </div>
+    </div>
+
+    <!-- ZONA -->
+    <div class="card">
+      <div class="card-title">Zona de Entrega</div>
+      <div class="radio-opts" id="zonaOpts">
+        <button class="r-btn on" data-zona="urbana">Urbana</button>
+        <button class="r-btn w" data-zona="suburbana">Suburbana</button>
+        <button class="r-btn d" data-zona="rural">Rural</button>
+      </div>
+    </div>
+
+    <!-- TURNO -->
+    <div class="card">
+      <div class="card-title">Horário / Turno</div>
+      <div class="radio-opts" id="turnoOpts">
+        <button class="r-btn on" data-turno="normal">☀️ Diurno (06h–22h)</button>
+        <button class="r-btn" data-turno="noturno">🌙 Noturno (22h–06h)</button>
+        <button class="r-btn" data-turno="feriado">🎉 Feriado / Fim de semana</button>
+      </div>
+    </div>
+
+    <!-- TIPO CARGA -->
+    <div class="card">
+      <div class="card-title">Tipo de Carga</div>
+      <div class="radio-opts" id="cargaOpts">
+        <button class="r-btn on" data-carga="normal">📦 Normal</button>
+        <button class="r-btn" data-carga="fragil">🥚 Frágil</button>
+        <button class="r-btn" data-carga="documentos">📄 Documentos</button>
+        <button class="r-btn" data-carga="alimentos">🍔 Alimentos</button>
+        <button class="r-btn" data-carga="medicamentos">💊 Medicamentos</button>
+      </div>
+    </div>
+
+    <!-- DETALHAMENTO -->
+    <div class="card">
+      <div class="card-title">Detalhamento</div>
+      <div id="breakdown"></div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="card">
+      <div class="card-title">Tabela de Frete</div>
+      <table class="t-table" id="tTabela">
+        <tr data-f="3"><td>Até 3 km</td><td>R$ 12,00 fixo</td></tr>
+        <tr data-f="6"><td>4 a 6 km</td><td>R$ 15,00 fixo</td></tr>
+        <tr data-f="10"><td>7 a 10 km</td><td>R$ 20,00 fixo</td></tr>
+        <tr data-f="15"><td>11 a 15 km</td><td>R$ 30,00 fixo</td></tr>
+        <tr data-f="99"><td>Acima de 15 km</td><td>R$ 2,50/km</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGE CLIENTES -->
+  <div class="page" id="page-clientes">
+    <div style="height:10px"></div>
+    <div class="card">
+      <div class="card-title" id="formTit">Novo Cliente</div>
+      <div class="field-group"><label class="field-label">Nome *</label><input class="field-input" id="fiNome" type="text" placeholder="Nome completo"/></div>
+      <div class="field-row">
+        <div class="field-group"><label class="field-label">Telefone</label><input class="field-input" id="fiTel" type="tel" placeholder="(99) 99999-9999" inputmode="tel"/></div>
+        <div class="field-group"><label class="field-label">Bairro</label><input class="field-input" id="fiBairro" type="text" placeholder="Bairro"/></div>
+      </div>
+      <div class="field-group"><label class="field-label">Endereço</label><input class="field-input" id="fiEnd" type="text" placeholder="Rua, número"/></div>
+      <div class="field-group"><label class="field-label">Observação</label><input class="field-input" id="fiObs" type="text" placeholder="Ponto de referência..."/></div>
+      <input type="hidden" id="fiEditId"/>
+      <button class="btn-primary" id="btnSalvar" onclick="salvarCliente()">+ Cadastrar Cliente</button>
+      <div id="btnCancelar" style="display:none;margin-top:8px">
+        <button class="btn-sec" style="width:100%" onclick="cancelarEdit()">Cancelar edição</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-title">Clientes <span class="badge" id="clBadge">0</span></div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-ico">🔍</span>
+        <input type="text" id="clSearch" placeholder="Buscar por nome ou bairro..."/>
+      </div>
+      <div id="clLista"><div class="empty"><span>👥</span>Nenhum cliente</div></div>
+    </div>
+  </div>
+
+  <!-- PAGE HISTORICO -->
+  <div class="page" id="page-historico">
+    <div style="height:10px"></div>
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-title w">Corridas do Dia <span class="badge" id="hBadge">0</span></div>
+        <button class="btn-clear" onclick="limparHist()">Limpar</button>
+      </div>
+      <div id="hLista"><div class="empty"><span>🏍️</span>Nenhuma corrida</div></div>
+      <div class="hist-total" id="hTotal" style="display:none">
+        <span class="ht-label">Total acumulado</span>
+        <span class="ht-val" id="hTotalVal">R$0,00</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="modal-ov" id="modalOv" onclick="if(event.target===this)fecharModal()">
+  <div class="modal">
+    <div class="modal-title">Selecionar Cliente</div>
+    <input class="modal-search" id="modalSearch" type="text" placeholder="Buscar..."/>
+    <div class="modal-item" id="modalNenhum"><span style="font-size:1.2rem">👤</span><div><div class="modal-item-nome">Nenhum (sem cliente)</div></div></div>
+    <div id="modalLista"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp }                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
+                                                      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile }
+                                                      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const FB = {
+  apiKey:"AIzaSyBk0wIhd8yyxuvZ-zSMuDC2eohZcZwW39I",
+  authDomain:"moto-frete-8ebd3.firebaseapp.com",
+  projectId:"moto-frete-8ebd3",
+  storageBucket:"moto-frete-8ebd3.firebasestorage.app",
+  messagingSenderId:"386959803709",
+  appId:"1:386959803709:web:bcd3ce532a133a8fb8b154"
+};
+const app  = initializeApp(FB);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+// ── STATE ──
+const S = {
+  km:5, espera:0, peso:1, pedagio:0, retorno:false,
+  zona:'urbana', turno:'normal', carga:'normal',
+  clienteSel:null, clientes:[], historico:[]
+};
+const ZONAS  = {urbana:1.0, suburbana:1.3, rural:1.7};
+const TURNOS = {normal:1.0, noturno:1.4, feriado:1.5};
+const CARGAS = {
+  normal:{m:1.0,i:'📦',l:'Normal'}, fragil:{m:1.3,i:'🥚',l:'Frágil'},
+  documentos:{m:0.9,i:'📄',l:'Documentos'}, alimentos:{m:1.1,i:'🍔',l:'Alimentos'},
+  medicamentos:{m:1.2,i:'💊',l:'Medicamentos'}
+};
+
+// ── TARIFAS ──
+function tarifa(km){ if(km<=3)return 12; if(km<=6)return 15; if(km<=10)return 20; if(km<=15)return 30; return+(km*2.5).toFixed(2); }
+function faixaDesc(km){ if(km<=3)return'Até 3 km → R$ 12,00 fixo'; if(km<=6)return'4–6 km → R$ 15,00 fixo'; if(km<=10)return'7–10 km → R$ 20,00 fixo'; if(km<=15)return'11–15 km → R$ 30,00 fixo'; return`Acima de 15 km → ${km} km × R$ 2,50`; }
+function faixaIdx(km){ if(km<=3)return 3; if(km<=6)return 6; if(km<=10)return 10; if(km<=15)return 15; return 99; }
+function fmt(n){ return'R$ '+n.toFixed(2).replace('.',','); }
+
+// ── CÁLCULO ──
+function calc(){
+  const dist = S.retorno ? S.km*2 : S.km;
+  const base = tarifa(dist);
+  const esp  = S.espera*0.5;
+  const pes  = Math.max(0,S.peso-1)*1.2;
+  const mult = ZONAS[S.zona]*TURNOS[S.turno]*CARGAS[S.carga].m;
+  const total= (base+esp+pes)*mult + S.pedagio;
+  return{dist,base,esp,pes,mult,total,desc:faixaDesc(dist)};
+}
+
+// ── UPDATE UI ──
+function update(){
+  S.espera  = +document.getElementById('slEspera').value;
+  S.peso    = +document.getElementById('slPeso').value;
+  S.pedagio = +document.getElementById('slPedagio').value;
+  S.retorno = document.getElementById('chkRetorno').checked;
+  document.getElementById('slvEspera').textContent  = S.espera+' min';
+  document.getElementById('slvPeso').textContent    = S.peso+' kg';
+  document.getElementById('slvPedagio').textContent = 'R$ '+S.pedagio.toFixed(0);
+
+  const r = calc();
+  document.getElementById('tvValor').textContent = 'R$'+r.total.toFixed(2).replace('.',',');
+  const zl={urbana:'Urbana',suburbana:'Suburbana',rural:'Rural'}[S.zona];
+  const tl={normal:'Diurno',noturno:'Noturno',feriado:'Feriado'}[S.turno];
+  document.getElementById('tvFaixa').textContent = (S.retorno?r.dist+' km (ida+volta)':S.km+' km')+' · '+zl+' · '+tl;
+  const tcEl=document.getElementById('tvCliente');
+  if(S.clienteSel){tcEl.textContent='👤 '+S.clienteSel.nome;tcEl.style.display='block';}
+  else tcEl.style.display='none';
+
+  document.getElementById('kmBadge').textContent = r.desc;
+
+  let bd='<div class="bd-row"><span class="bd-key">'+r.desc+'</span><span class="bd-val">'+fmt(r.base)+'</span></div>';
+  if(r.esp>0) bd+='<div class="bd-row"><span class="bd-key">Espera ('+S.espera+' min)</span><span class="bd-val">'+fmt(r.esp)+'</span></div>';
+  if(r.pes>0) bd+='<div class="bd-row"><span class="bd-key">Excesso peso ('+S.peso+' kg)</span><span class="bd-val">'+fmt(r.pes)+'</span></div>';
+  if(S.pedagio>0) bd+='<div class="bd-row"><span class="bd-key">Pedágio / extras</span><span class="bd-val">'+fmt(S.pedagio)+'</span></div>';
+  if(r.mult!==1.0) bd+='<div class="bd-row"><span class="bd-key">Multiplicadores</span><span class="bd-mult">×'+r.mult.toFixed(2)+'</span></div>';
+  document.getElementById('breakdown').innerHTML=bd;
+
+  const fi=faixaIdx(r.dist);
+  document.querySelectorAll('#tTabela tr').forEach(tr=>{
+    const on=parseInt(tr.dataset.f)===fi;
+    tr.classList.toggle('t-on',on);
+    const dot=tr.querySelector('.t-dot');
+    if(on&&!dot) tr.querySelector('td:first-child').insertAdjacentHTML('afterbegin','<span class="t-dot"></span>');
+    else if(!on&&dot) dot.remove();
+  });
+}
+
+// ── SYNC DOT ──
+function sync(s){ document.getElementById('syncDot').className='sync-dot '+s; }
+
+// ── REGISTRAR ──
+async function registrar(){
+  const r=calc();
+  const zl={urbana:'Urbana',suburbana:'Suburbana',rural:'Rural'}[S.zona];
+  try{
+    sync('syncing');
+    await addDoc(collection(db,'corridas'),{
+      distTotal:r.dist, retorno:S.retorno, zona:zl,
+      icon:CARGAS[S.carga].i, cargaLabel:CARGAS[S.carga].l,
+      total:r.total, hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+      cliente:S.clienteSel?S.clienteSel.nome:null,
+      clienteId:S.clienteSel?S.clienteSel.id:null,
+      criadoEm:serverTimestamp()
+    });
+    if(S.clienteSel){
+      const c=S.clientes.find(x=>x.id===S.clienteSel.id);
+      if(c) await updateDoc(doc(db,'clientes',c.id),{corridas:(c.corridas||0)+1,gasto:+((c.gasto||0)+r.total).toFixed(2)});
+    }
+    sync('ok');
+    const b=document.getElementById('btnReg');
+    b.classList.add('pop'); setTimeout(()=>b.classList.remove('pop'),500);
+    toast('✅ Corrida salva! '+fmt(r.total));
+  }catch(e){sync('err');toast('❌ Erro: '+e.message);}
+}
+
+// ── LISTENERS FIREBASE ──
+let unsubCl=null, unsubCo=null;
+function startListeners(){
+  if(unsubCl) unsubCl();
+  if(unsubCo) unsubCo();
+  unsubCl=onSnapshot(collection(db,'clientes'),snap=>{
+    S.clientes=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderClientes();
+    document.getElementById('clBadge').textContent=S.clientes.length;
+  });
+  unsubCo=onSnapshot(query(collection(db,'corridas'),orderBy('criadoEm','desc')),snap=>{
+    S.historico=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderHistorico();
+  });
+}
+function stopListeners(){
+  if(unsubCl){unsubCl();unsubCl=null;}
+  if(unsubCo){unsubCo();unsubCo=null;}
+}
+
+// ── RENDER HISTÓRICO ──
+function renderHistorico(){
+  const lista=document.getElementById('hLista');
+  const badge=document.getElementById('hBadge');
+  const tot=document.getElementById('hTotal');
+  badge.textContent=S.historico.length;
+  if(!S.historico.length){lista.innerHTML='<div class="empty"><span>🏍️</span>Nenhuma corrida</div>';tot.style.display='none';return;}
+  lista.innerHTML=S.historico.map(c=>`
+    <div class="hist-item">
+      <div class="hist-ico">${c.icon||'📦'}</div>
+      <div class="hist-info">
+        <div class="hist-desc">${c.cliente?'👤 '+c.cliente+' · ':''}${c.distTotal} km · ${c.zona}</div>
+        <div class="hist-meta">${c.hora||''} · ${c.cargaLabel||''}${c.retorno?' · ida+volta':''}</div>
+      </div>
+      <div class="hist-val">R$${c.total.toFixed(2).replace('.',',')}</div>
+    </div>`).join('');
+  const ac=S.historico.reduce((a,c)=>a+c.total,0);
+  document.getElementById('hTotalVal').textContent='R$'+ac.toFixed(2).replace('.',',');
+  tot.style.display='flex';
+}
+
+// ── LIMPAR HISTÓRICO ──
+async function limparHistorico(){
+  if(!confirm('Apagar todas as corridas?')) return;
+  sync('syncing');
+  try{
+    await Promise.all(S.historico.map(c=>deleteDoc(doc(db,'corridas',c.id))));
+    sync('ok'); toast('🗑️ Histórico apagado');
+  }catch(e){sync('err');toast('❌ '+e.message);}
+}
+
+// ── CLIENTES ──
+function renderClientes(){
+  const q=(document.getElementById('clSearch').value||'').toLowerCase();
+  const f=S.clientes.filter(c=>c.nome.toLowerCase().includes(q)||(c.bairro||'').toLowerCase().includes(q));
+  const lista=document.getElementById('clLista');
+  if(!f.length){lista.innerHTML='<div class="empty"><span>👥</span>'+(S.clientes.length?'Nenhum resultado':'Nenhum cliente')+'</div>';return;}
+  lista.innerHTML=f.map(c=>{
+    const ini=c.nome.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const sel=S.clienteSel&&S.clienteSel.id===c.id;
+    return`<div class="cl-card${sel?' sel':''}">
+      <div class="cl-top">
+        <div class="cl-av">${ini}</div>
+        <div class="cl-info"><div class="cl-nome">${c.nome}</div><div class="cl-tel">${c.tel||'Sem telefone'}</div></div>
+      </div>
+      <div class="cl-badges">
+        ${c.bairro?`<span class="cb cb-e">📍 ${c.bairro}</span>`:''}
+        ${c.endereco?`<span class="cb cb-e">🏠 ${c.endereco}</span>`:''}
+        ${c.corridas?`<span class="cb cb-c">🏍️ ${c.corridas} corrida${c.corridas>1?'s':''}</span>`:''}
+        ${c.gasto?`<span class="cb cb-g">💰 R$${Number(c.gasto).toFixed(2).replace('.',',')}</span>`:''}
+        ${c.obs?`<span class="cb cb-e">📝 ${c.obs}</span>`:''}
+      </div>
+      <div class="cl-actions">
+        <button class="btn-sec" data-edit="${c.id}">✏️ Editar</button>
+        <button class="btn-sec" data-selir="${c.id}">🏍️ Selecionar</button>
+        <button class="btn-del" data-del="${c.id}">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  lista.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editarCliente(b.dataset.edit)));
+  lista.querySelectorAll('[data-selir]').forEach(b=>b.addEventListener('click',()=>{selecionarCliente(S.clientes.find(x=>x.id===b.dataset.selir));goPage('frete');}));
+  lista.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>excluirCliente(b.dataset.del)));
+}
+
+async function salvarCliente(){
+  const nome=document.getElementById('fiNome').value.trim();
+  if(!nome){toast('⚠️ Informe o nome');return;}
+  const dados={nome,tel:document.getElementById('fiTel').value.trim(),bairro:document.getElementById('fiBairro').value.trim(),endereco:document.getElementById('fiEnd').value.trim(),obs:document.getElementById('fiObs').value.trim()};
+  const editId=document.getElementById('fiEditId').value;
+  sync('syncing');
+  try{
+    if(editId){await updateDoc(doc(db,'clientes',editId),dados);cancelarEdit();toast('✅ Cliente atualizado');}
+    else{dados.corridas=0;dados.gasto=0;dados.criadoEm=serverTimestamp();await addDoc(collection(db,'clientes'),dados);limparForm();toast('✅ Cliente cadastrado');}
+    sync('ok');
+  }catch(e){sync('err');toast('❌ '+e.message);}
+}
+
+function editarCliente(id){
+  const c=S.clientes.find(x=>x.id===id);if(!c)return;
+  document.getElementById('fiNome').value=c.nome||'';
+  document.getElementById('fiTel').value=c.tel||'';
+  document.getElementById('fiBairro').value=c.bairro||'';
+  document.getElementById('fiEnd').value=c.endereco||'';
+  document.getElementById('fiObs').value=c.obs||'';
+  document.getElementById('fiEditId').value=id;
+  document.getElementById('formTit').textContent='Editar Cliente';
+  document.getElementById('btnSalvar').textContent='💾 Salvar';
+  document.getElementById('btnCancelar').style.display='block';
+  goPage('clientes');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function excluirCliente(id){
+  if(!confirm('Excluir este cliente?'))return;
+  sync('syncing');
+  try{
+    await deleteDoc(doc(db,'clientes',id));
+    if(S.clienteSel&&S.clienteSel.id===id)selecionarCliente(null);
+    sync('ok');toast('🗑️ Cliente excluído');
+  }catch(e){sync('err');toast('❌ '+e.message);}
+}
+
+function cancelarEdit(){
+  limparForm();
+  document.getElementById('fiEditId').value='';
+  document.getElementById('formTit').textContent='Novo Cliente';
+  document.getElementById('btnSalvar').textContent='+ Cadastrar Cliente';
+  document.getElementById('btnCancelar').style.display='none';
+}
+
+function limparForm(){['fiNome','fiTel','fiBairro','fiEnd','fiObs'].forEach(id=>document.getElementById(id).value='');}
+
+// ── MODAL CLIENTE ──
+function abrirModal(){
+  document.getElementById('modalSearch').value='';
+  renderModal();
+  document.getElementById('modalOv').classList.add('open');
+}
+function fecharModal(){document.getElementById('modalOv').classList.remove('open');}
+function renderModal(){
+  const q=(document.getElementById('modalSearch').value||'').toLowerCase();
+  const f=S.clientes.filter(c=>c.nome.toLowerCase().includes(q)||(c.bairro||'').toLowerCase().includes(q));
+  const lista=document.getElementById('modalLista');
+  lista.innerHTML=f.map(c=>`
+    <div class="modal-item${S.clienteSel&&S.clienteSel.id===c.id?' sel':''}" data-mid="${c.id}">
+      <span style="font-size:1.2rem">${S.clienteSel&&S.clienteSel.id===c.id?'✅':'👤'}</span>
+      <div><div class="modal-item-nome">${c.nome}</div><div class="modal-item-end">${[c.bairro,c.endereco].filter(Boolean).join(' · ')||'Sem endereço'}</div></div>
+    </div>`).join('');
+  lista.querySelectorAll('[data-mid]').forEach(el=>el.addEventListener('click',()=>{selecionarCliente(S.clientes.find(x=>x.id===el.dataset.mid));fecharModal();}));
+}
+
+function selecionarCliente(c){
+  S.clienteSel=c;
+  const t=document.getElementById('clSelText');
+  const s=document.getElementById('clSelSub');
+  if(c){t.textContent=c.nome;t.className='cl-sel-text has';s.textContent=[c.bairro,c.endereco].filter(Boolean).join(' · ')||'';}
+  else{t.textContent='Selecionar cliente';t.className='cl-sel-text';s.textContent='Toque para escolher';}
+  update();
+}
+
+// ── NAV ──
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nt-'+id).classList.add('active');
+}
+
+// ── TOAST ──
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── AUTH ──
+window.authTab=function(tab){
+  const isL=tab==='login';
+  document.getElementById('formLogin').classList.toggle('active',isL);
+  document.getElementById('formCadastro').classList.toggle('active',!isL);
+  document.getElementById('tabEntrar').classList.toggle('active',isL);
+  document.getElementById('tabCadastrar').classList.toggle('active',!isL);
+  document.getElementById('lErro').textContent='';
+  document.getElementById('cErro').textContent='';
+};
+
+window.verSenha=function(id,btn){
+  const i=document.getElementById(id);
+  i.type=i.type==='password'?'text':'password';
+  btn.textContent=i.type==='password'?'👁️':'🙈';
+};
+
+function erroAuth(code){
+  const m={'auth/email-already-in-use':'E-mail já cadastrado.','auth/invalid-email':'E-mail inválido.','auth/weak-password':'Senha fraca (mín. 6 caracteres).','auth/user-not-found':'Usuário não encontrado.','auth/wrong-password':'Senha incorreta.','auth/invalid-credential':'E-mail ou senha incorretos.','auth/too-many-requests':'Muitas tentativas. Aguarde.','auth/network-request-failed':'Sem conexão.'};
+  return m[code]||'Erro: '+code;
+}
+
+function setBtnLoad(id,load,txt){
+  const b=document.getElementById(id);
+  b.disabled=load;b.textContent=load?'⏳ Aguarde...':txt;b.style.opacity=load?'0.6':'1';
+}
+
+window.fazerLogin=async function(){
+  const email=document.getElementById('lEmail').value.trim();
+  const senha=document.getElementById('lSenha').value;
+  const el=document.getElementById('lErro');
+  el.className='auth-erro';el.textContent='';
+  if(!email){el.classList.add('erro');el.textContent='⚠️ Informe o e-mail.';return;}
+  if(!senha){el.classList.add('erro');el.textContent='⚠️ Informe a senha.';return;}
+  setBtnLoad('btnEntrar',true,'Entrar');
+  try{
+    await signInWithEmailAndPassword(auth,email,senha);
+  }catch(e){
+    el.classList.add('erro');el.textContent=erroAuth(e.code);
+    setBtnLoad('btnEntrar',false,'Entrar');
+  }
+};
+
+window.fazerCadastro=async function(){
+  const nome=document.getElementById('cNome').value.trim();
+  const email=document.getElementById('cEmail').value.trim();
+  const senha=document.getElementById('cSenha').value;
+  const el=document.getElementById('cErro');
+  el.className='auth-erro';el.textContent='';
+  if(!nome){el.classList.add('erro');el.textContent='⚠️ Informe seu nome.';return;}
+  if(!email){el.classList.add('erro');el.textContent='⚠️ Informe o e-mail.';return;}
+  if(senha.length<6){el.classList.add('erro');el.textContent='⚠️ Senha com mín. 6 caracteres.';return;}
+  setBtnLoad('btnCadastrar',true,'Criar conta');
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,email,senha);
+    await updateProfile(cred.user,{displayName:nome});
+  }catch(e){
+    el.classList.add('erro');el.textContent=erroAuth(e.code);
+    setBtnLoad('btnCadastrar',false,'Criar conta');
+  }
+};
+
+window.fazerLogout=async function(){
+  if(!confirm('Deseja sair da sua conta?'))return;
+  stopListeners();
+  S.clientes=[];S.historico=[];S.clienteSel=null;
+  await signOut(auth);
+};
+
+// ── INIT ──
+onAuthStateChanged(auth,user=>{
+  if(user){
+    // Mostrar app, esconder login
+    document.getElementById('authScreen').classList.add('hide');
+    document.getElementById('appScreen').classList.add('show');
+    // Resetar botões
+    setBtnLoad('btnEntrar',false,'Entrar');
+    setBtnLoad('btnCadastrar',false,'Criar conta');
+    // Iniciar dados
+    startListeners();
+    update();
+    const nome=user.displayName?user.displayName.split(' ')[0]:'Motoboy';
+    setTimeout(()=>toast('👋 Olá, '+nome+'!'),400);
+  }else{
+    // Mostrar login, esconder app
+    document.getElementById('authScreen').classList.remove('hide');
+    document.getElementById('appScreen').classList.remove('show');
+    stopListeners();
+  }
+});
+
+// ── EVENT LISTENERS ──
+document.getElementById('inputKm').addEventListener('input',e=>{
+  const v=parseFloat(e.target.value);
+  if(!isNaN(v)&&v>0){S.km=v;update();}
+});
+document.querySelector('.km-btns').addEventListener('click',e=>{
+  const b=e.target.closest('[data-delta]');
+  if(b){S.km=Math.max(0.5,+(S.km+parseFloat(b.dataset.delta)).toFixed(1));document.getElementById('inputKm').value=S.km;update();}
+});
+document.getElementById('btnReg').addEventListener('click',registrar);
+document.getElementById('clSelector').addEventListener('click',abrirModal);
+document.getElementById('modalNenhum').addEventListener('click',()=>{selecionarCliente(null);fecharModal();});
+document.getElementById('modalSearch').addEventListener('input',renderModal);
+document.getElementById('clSearch').addEventListener('input',renderClientes);
+['slEspera','slPeso','slPedagio'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+document.getElementById('chkRetorno').addEventListener('change',update);
+
+document.getElementById('zonaOpts').addEventListener('click',e=>{
+  const b=e.target.closest('[data-zona]');
+  if(b){S.zona=b.dataset.zona;document.querySelectorAll('#zonaOpts .r-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');update();}
+});
+document.getElementById('turnoOpts').addEventListener('click',e=>{
+  const b=e.target.closest('[data-turno]');
+  if(b){S.turno=b.dataset.turno;document.querySelectorAll('#turnoOpts .r-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');update();}
+});
+document.getElementById('cargaOpts').addEventListener('click',e=>{
+  const b=e.target.closest('[data-carga]');
+  if(b){S.carga=b.dataset.carga;document.querySelectorAll('#cargaOpts .r-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');update();}
+});
+
+// Expor funções usadas em onclick do HTML
+window.goPage=goPage;
+window.salvarCliente=salvarCliente;
+window.cancelarEdit=cancelarEdit;
+window.limparHist=limparHistorico;
+window.fecharModal=fecharModal;
+</script>
+</body>
+</html>
