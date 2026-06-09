@@ -1,0 +1,37 @@
+{
+  "name": "MotoFrete - Gestão de Entregas",
+  "short_name": "MotoFrete",
+  "description": "Calculadora de frete para motoboys com cadastro de clientes e histórico de corridas",
+  "start_url": "/motofrete/",
+  "scope": "/motofrete/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D0F14",
+  "theme_color": "#00E5A0",
+  "lang": "pt-BR",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Calcular Frete",
+      "short_name": "Frete",
+      "description": "Abrir calculadora de frete",
+      "url": "/motofrete/",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
